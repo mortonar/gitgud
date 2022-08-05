@@ -5,7 +5,7 @@ use clap::Parser;
 #[clap(author, version, about, long_about = None)]
 pub struct Cli {
     /// repository to browse
-    pub repo: String
+    pub repo: String,
 }
 
 impl Default for Cli {
@@ -14,5 +14,4 @@ impl Default for Cli {
     }
 }
 
-impl Cli {
-}
+impl Cli {}

@@ -1,6 +1,5 @@
-use std::borrow::Borrow;
-use git2::{Commit, Error, ObjectType, Reflog, Repository, Sort, TreeWalkMode};
 use crate::cli::Cli;
+use git2::{Commit, Error, Repository};
 
 pub fn open_repo(cli: Cli) -> Result<(), Error> {
     let repo = Repository::open(&cli.repo)?;
@@ -35,7 +34,7 @@ pub fn open_repo(cli: Cli) -> Result<(), Error> {
 }
 
 pub fn get_head_commit(repo: &Repository) -> Result<Commit, Error> {
-    Ok(repo.head()?.peel_to_commit()?)
+    repo.head()?.peel_to_commit()
 }
 
 pub fn display_commit_info(commit: &Commit) {
