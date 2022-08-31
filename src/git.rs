@@ -1,4 +1,5 @@
 use crate::cli::Cli;
+use chrono::{DateTime, Local, NaiveDateTime, Utc};
 use crossterm::event::{Event, KeyCode};
 use crossterm::style::Stylize;
 use crossterm::{terminal, ExecutableCommand};
@@ -19,14 +20,6 @@ pub fn get_head_commit(repo: &Repository) -> Result<Commit, Error> {
     repo.head()?.peel_to_commit()
 }
 
-pub fn get_commit_info(commit: &Commit) -> String {
-    format!(
-        "Author: {}| {}",
-        commit.author(),
-        commit.summary().expect("no commit!")
-    )
-}
-
 pub struct CommitList {
     selected: usize,
     commits: Vec<GGCommit>,
@@ -38,10 +31,16 @@ impl CommitList {
             .execute(terminal::Clear(terminal::ClearType::All))
             .unwrap();
         for (i, c) in self.commits.iter().enumerate() {
+            let line = format!(
+                "[{}] {} | {}\r",
+                &c.time.clone().green(),
+                &c.author.clone().yellow(),
+                &c.message.clone().white()
+            );
             if i == self.selected {
-                println!("{}\r", &c.info.clone().on_blue().on_blue());
+                println!("{}", &line.on_blue());
             } else {
-                println!("{}\r", &c.info);
+                println!("{}", &line);
             }
         }
     }
@@ -56,7 +55,9 @@ impl CommitList {
 }
 
 struct GGCommit {
-    info: String,
+    author: String,
+    message: String,
+    time: String,
 }
 
 pub fn get_commit_list(repo: &Repo) -> Result<CommitList, Error> {
@@ -67,7 +68,9 @@ pub fn get_commit_list(repo: &Repo) -> Result<CommitList, Error> {
     for _i in 0..=10 {
         if let Some(c) = stack.pop() {
             commit_list.push(GGCommit {
-                info: get_commit_info(&c),
+                author: format!("{}", c.author()),
+                message: format!("{}", c.summary().expect("no commit!")),
+                time: time_to_string(c.time().seconds()),
             });
             stack.push(c.parent(0)?);
         }
@@ -76,4 +79,12 @@ pub fn get_commit_list(repo: &Repo) -> Result<CommitList, Error> {
         selected: 0,
         commits: commit_list,
     })
+}
+
+pub fn time_to_string(secs: i64) -> String {
+    let time = DateTime::<Local>::from(DateTime::<Utc>::from_utc(
+        NaiveDateTime::from_timestamp(secs, 0),
+        Utc,
+    ));
+    time.format("%Y-%m-%d %H:%M:%S").to_string()
 }
